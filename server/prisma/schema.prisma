@@ -7,10 +7,168 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  RECRUITER
+  INTERVIEWER
+}
+
+enum RecruitmentStage {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum Recommendation {
+  STRONG_YES
+  YES
+  NO
+  STRONG_NO
+}
+
 model User {
-    id        String   @id @default(uuid())
-    email     String   @unique
-    name      String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id                  String             @id @default(uuid())
+  name                String
+  email               String             @unique
+  password            String
+  role                Role
+  isActive            Boolean            @default(true) @map("is_active")
+  lastLogin           DateTime?          @map("last_login")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  // Relationships
+  createdCandidates   Candidate[]        @relation("CreatedCandidates")
+  createdSessions     InterviewSession[] @relation("CreatedSessions")
+  assignedSessions    InterviewSession[] @relation("AssignedSessions")
+  evaluations         Evaluation[]       @relation("AuthoredEvaluations")
+  unlockedEvaluations Evaluation[]       @relation("UnlockedEvaluations")
+  activityLogs        ActivityLog[]
+
+  @@map("users")
+}
+
+model Candidate {
+  id              String             @id @default(uuid())
+  name            String
+  email           String
+  phone           String?
+  appliedPosition String             @map("applied_position")
+  resumeUrl       String?            @map("resume_url")
+  candidateSource String?            @map("candidate_source")
+  stage           RecruitmentStage   @default(APPLIED)
+  createdByUserId String             @map("created_by_user_id")
+  createdByUser   User               @relation("CreatedCandidates", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  // Relationships
+  sessions        InterviewSession[]
+  evaluations     Evaluation[]
+
+  @@map("candidates")
+}
+
+model InterviewSession {
+  id             String        @id @default(uuid())
+  candidateId    String        @map("candidate_id")
+  candidate      Candidate     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interviewerId  String        @map("interviewer_id")
+  interviewer    User          @relation("AssignedSessions", fields: [interviewerId], references: [id], onDelete: Restrict)
+  createdById    String        @map("created_by_id")
+  createdBy      User          @relation("CreatedSessions", fields: [createdById], references: [id], onDelete: Restrict)
+  type           String
+  scheduledStart DateTime      @map("scheduled_start")
+  scheduledEnd   DateTime      @map("scheduled_end")
+  meetingLink    String?       @map("meeting_link")
+  location       String?
+  internalNotes  String?       @map("internal_notes")
+  status         SessionStatus @default(SCHEDULED)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relationships
+  evaluation     Evaluation?
+
+  @@map("interview_sessions")
+}
+
+model Evaluation {
+  id              String          @id @default(uuid())
+  sessionId       String          @unique @map("session_id")
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  candidateId     String          @map("candidate_id")
+  candidate       Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  authorId        String          @map("author_id")
+  author          User            @relation("AuthoredEvaluations", fields: [authorId], references: [id], onDelete: Restrict)
+  recommendation  Recommendation
+  overallFeedback String          @map("overall_feedback")
+  submittedAt     DateTime?       @map("submitted_at")
+  lockedAt        DateTime?       @map("locked_at")
+  unlockedAt      DateTime?       @map("unlocked_at")
+  unlockedById    String?         @map("unlocked_by_id")
+  unlockedBy      User?           @relation("UnlockedEvaluations", fields: [unlockedById], references: [id], onDelete: SetNull)
+  unlockReason    String?         @map("unlock_reason")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relationships
+  scores          EvaluationScore[]
+
+  @@map("evaluations")
+}
+
+model RubricCriterion {
+  id           String            @id @default(uuid())
+  key          String            @unique
+  label        String
+  description  String?
+  displayOrder Int               @default(0) @map("display_order")
+  isActive     Boolean           @default(true) @map("is_active")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  // Relationships
+  scores       EvaluationScore[]
+
+  @@map("rubric_criteria")
+}
+
+model EvaluationScore {
+  id            String          @id @default(uuid())
+  evaluationId  String          @map("evaluation_id")
+  evaluation    Evaluation      @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterionId   String          @map("criterion_id")
+  criterion     RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  score         Int
+  criterionNote String?         @map("criterion_note")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@unique([evaluationId, criterionId])
+  @@map("evaluation_scores")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  metadata   Json?
+  requestId  String?  @map("request_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("activity_logs")
 }
