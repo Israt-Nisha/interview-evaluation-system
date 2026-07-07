@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { AuthRoutes } from '../modules/Auth/auth.route';
 
 type TModuleRoutes = {
   path: string;
@@ -8,7 +9,10 @@ type TModuleRoutes = {
 const router = Router();
 
 const moduleRoutes: TModuleRoutes[] = [
- 
+  {
+    path: '/auth',
+    route: AuthRoutes,
+  },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
