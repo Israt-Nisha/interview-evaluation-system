@@ -51,10 +51,10 @@
 							"var jsonData = pm.response.json();",
 							"if (jsonData.success && jsonData.data) {",
 							"    if (jsonData.data.accessToken) {",
-							"        pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+							"        pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
 							"    }",
 							"    if (jsonData.data.refreshToken) {",
-							"        pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+							"        pm.collectionVariables.set(\"refreshToken\", jsonData.data.refreshToken);",
 							"    }",
 							"    pm.test(\"Login successful and tokens captured\", function () {",
 							"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
@@ -87,7 +87,7 @@
 						"login"
 					]
 				},
-				"description": "Authenticate user credentials. On success, automatically saves the access and refresh tokens to environment variables."
+				"description": "Authenticate user credentials. On success, automatically saves the access and refresh tokens to collection variables."
 			},
 			"response": []
 		},
@@ -112,7 +112,7 @@
 						"me"
 					]
 				},
-				"description": "Fetch the authenticated user's profile details. Requires a valid accessToken."
+				"description": "Fetch the authenticated user's profile details. Requires a valid accessToken (auto-populated after Login)."
 			},
 			"response": []
 		},
@@ -125,7 +125,7 @@
 						"exec": [
 							"var jsonData = pm.response.json();",
 							"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
-							"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+							"    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
 							"    pm.test(\"Access token successfully refreshed\", function () {",
 							"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
 							"    });",
@@ -168,10 +168,10 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.environment.unset(\"accessToken\");",
-							"pm.environment.unset(\"refreshToken\");",
-							"pm.test(\"Logged out and environment variables cleared\", function () {",
-							"    pm.expect(pm.environment.get(\"accessToken\")).to.be.undefined;",
+							"pm.collectionVariables.unset(\"accessToken\");",
+							"pm.collectionVariables.unset(\"refreshToken\");",
+							"pm.test(\"Logged out and collection variables cleared\", function () {",
+							"    pm.expect(pm.collectionVariables.get(\"accessToken\")).to.be.undefined;",
 							"});"
 						],
 						"type": "text/javascript"
@@ -191,7 +191,7 @@
 						"logout"
 					]
 				},
-				"description": "Clear HTTP cookies and local environment variables for the user session."
+				"description": "Clear HTTP cookies and collection variables for the user session."
 			},
 			"response": []
 		}
@@ -200,6 +200,16 @@
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:5000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
 			"type": "string"
 		}
 	]

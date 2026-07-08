@@ -23,6 +23,10 @@ export const auth = (...requiredRoles: Role[]) => {
 
     const token = authHeader.split(' ')[1];
 
+    if (!token) {
+      throw new AppError(status.UNAUTHORIZED, 'Token is missing!');
+    }
+
     try {
       const decoded = jwt.verify(token, config.jwt_access_secret) as JwtPayload;
       
@@ -54,11 +58,12 @@ export const auth = (...requiredRoles: Role[]) => {
       };
 
       next();
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError(status.UNAUTHORIZED, 'Invalid or expired token!');
+      console.error('JWT Verification Error:', error);
+      throw new AppError(status.UNAUTHORIZED, `Invalid or expired token! ${error.message || ''}`);
     }
   });
 };
