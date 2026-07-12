@@ -1,5 +1,5 @@
 {
-    "compilerOptions": {
+  "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ES2023",
@@ -12,7 +12,8 @@
     "ignoreDeprecations": "6.0"
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "prisma/seed.ts"
   ],
   "exclude": [
     "node_modules",
