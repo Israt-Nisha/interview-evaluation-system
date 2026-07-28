@@ -1,199 +1,1502 @@
 {
 	"info": {
 		"_postman_id": "893c52e4-df1a-4ab7-b8f4-df5be132e58c",
-		"name": "IECAS - Authentication API",
-		"description": "Postman collection for testing the Authentication & Authorization module APIs of the Interview Evaluation & Candidate Assessment System (IECAS).",
+		"name": "IECAS - End to End API Test Collection",
+		"description": "Comprehensive Postman collection for testing the Interview Evaluation & Candidate Assessment System (IECAS). Includes nested folders for each feature module, automated pre-request scripts for dynamic dates, and post-request test scripts to capture IDs and tokens into collection variables.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Register User",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{accessToken}}",
-						"description": "Required for subsequent registrations. Bypassed automatically if DB is empty (first admin registration).",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"ADMIN\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{baseUrl}}/auth/register",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"auth",
-						"register"
-					]
-				},
-				"description": "Register a new system user. Restricted to ADMIN users (unless database has 0 users, allowing initial bootstrap)."
-			},
-			"response": []
-		},
-		{
-			"name": "Login User",
-			"event": [
+			"name": "01. Authentication & Bootstrapping",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = pm.response.json();",
-							"if (jsonData.success && jsonData.data) {",
-							"    if (jsonData.data.accessToken) {",
-							"        pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
-							"    }",
-							"    if (jsonData.data.refreshToken) {",
-							"        pm.collectionVariables.set(\"refreshToken\", jsonData.data.refreshToken);",
-							"    }",
-							"    pm.test(\"Login successful and tokens captured\", function () {",
-							"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
-							"    });",
-							"}"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+					"name": "Login Seed Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"adminAccessToken\", jsonData.data.accessToken);",
+									"    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.collectionVariables.set(\"refreshToken\", jsonData.data.refreshToken);",
+									"    pm.test(\"Admin Login successful\", function () {",
+									"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
 						}
-					}
-				},
-				"url": {
-					"raw": "{{baseUrl}}/auth/login",
-					"host": [
-						"{{baseUrl}}"
 					],
-					"path": [
-						"auth",
-						"login"
-					]
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@gmail.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate Admin credentials. Saves the admin token to collection variables to authorize user creation."
+					},
+					"response": []
 				},
-				"description": "Authenticate user credentials. On success, automatically saves the access and refresh tokens to collection variables."
-			},
-			"response": []
-		},
-		{
-			"name": "Get Current User Profile",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{accessToken}}",
-						"type": "text"
-					}
-				],
-				"url": {
-					"raw": "{{baseUrl}}/auth/me",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"auth",
-						"me"
-					]
-				},
-				"description": "Fetch the authenticated user's profile details. Requires a valid accessToken (auto-populated after Login)."
-			},
-			"response": []
-		},
-		{
-			"name": "Refresh Access Token",
-			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = pm.response.json();",
-							"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
-							"    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
-							"    pm.test(\"Access token successfully refreshed\", function () {",
-							"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
-							"    });",
-							"}"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+					"name": "Register Recruiter User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"recruiterId\", jsonData.data.id);",
+									"    pm.test(\"Recruiter registered successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
 						}
-					}
-				},
-				"url": {
-					"raw": "{{baseUrl}}/auth/refresh-token",
-					"host": [
-						"{{baseUrl}}"
 					],
-					"path": [
-						"auth",
-						"refresh-token"
-					]
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Recruiter Jane\",\n    \"email\": \"recruiter@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"RECRUITER\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create a Recruiter user under the Admin session."
+					},
+					"response": []
 				},
-				"description": "Exchange a valid refreshToken for a new accessToken."
-			},
-			"response": []
+				{
+					"name": "Login Recruiter User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"recruiterAccessToken\", jsonData.data.accessToken);",
+									"    pm.test(\"Recruiter Login successful\", function () {",
+									"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"recruiter@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate Recruiter credentials. Captures the recruiterAccessToken."
+					},
+					"response": []
+				},
+				{
+					"name": "Register Interviewer User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"interviewerId\", jsonData.data.id);",
+									"    pm.test(\"Interviewer registered successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Interviewer John\",\n    \"email\": \"interviewer@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"INTERVIEWER\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create an Interviewer user under the Admin session."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Interviewer User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"interviewerAccessToken\", jsonData.data.accessToken);",
+									"    pm.test(\"Interviewer Login successful\", function () {",
+									"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"interviewer@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate Interviewer credentials. Captures the interviewerAccessToken."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Retrieve profile details of the currently authenticated token."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
+									"    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.test(\"Access token successfully refreshed\", function () {",
+									"        pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh-token"
+							]
+						},
+						"description": "Exchange a refresh token for a new access token."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Logout request completed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout and invalidate cookie session."
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"name": "Logout User",
-			"event": [
+			"name": "02. User Management",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.collectionVariables.unset(\"accessToken\");",
-							"pm.collectionVariables.unset(\"refreshToken\");",
-							"pm.test(\"Logged out and collection variables cleared\", function () {",
-							"    pm.expect(pm.collectionVariables.get(\"accessToken\")).to.be.undefined;",
-							"});"
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
 						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/auth/logout",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"auth",
-						"logout"
-					]
+						"url": {
+							"raw": "{{baseUrl}}/users?role=INTERVIEWER&page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "INTERVIEWER"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Fetch all users with filters (Admin only)."
+					},
+					"response": []
 				},
-				"description": "Clear HTTP cookies and collection variables for the user session."
-			},
-			"response": []
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{interviewerId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{interviewerId}}"
+							]
+						},
+						"description": "Fetch details of a single user by ID (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Interviewer John Updated\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{interviewerId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{interviewerId}}"
+							]
+						},
+						"description": "Update user details (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"isActive\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{interviewerId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{interviewerId}}",
+								"status"
+							]
+						},
+						"description": "Activate or deactivate a user (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Dummy User For Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"dummyUserId\", jsonData.data.id);",
+									"    pm.test(\"Dummy user created for soft-delete test\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dummy User\",\n    \"email\": \"dummy@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"INTERVIEWER\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Creates a temporary user to safely test the soft delete feature."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Dummy User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{dummyUserId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{dummyUserId}}"
+							]
+						},
+						"description": "Deletes (soft deletes by setting isActive=false) the dummy user (Admin only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03. Candidate Management",
+			"item": [
+				{
+					"name": "Create Candidate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"candidateId\", jsonData.data.id);",
+									"    pm.test(\"Candidate created successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"johndoe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"appliedPosition\": \"Fullstack Engineer\",\n    \"resumeUrl\": \"https://example.com/resumes/johndoe.pdf\",\n    \"candidateSource\": \"LinkedIn\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/candidates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates"
+							]
+						},
+						"description": "Add a new candidate profile to the recruitment pipeline (Recruiter, Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Candidates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/candidates?stage=APPLIED&page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates"
+							],
+							"query": [
+								{
+									"key": "stage",
+									"value": "APPLIED"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Fetch all candidates with search & filter parameters (Recruiter, Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Candidate by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/candidates/{{candidateId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates",
+								"{{candidateId}}"
+							]
+						},
+						"description": "Get candidate details (Recruiter, Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Candidate",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe Senior\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/candidates/{{candidateId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates",
+								"{{candidateId}}"
+							]
+						},
+						"description": "Update candidate profile information (Recruiter, Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Candidate Stage",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stage\": \"INTERVIEW\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/candidates/{{candidateId}}/stage",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates",
+								"{{candidateId}}",
+								"stage"
+							]
+						},
+						"description": "Transition a candidate to a new recruitment stage (Recruiter, Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Dummy Candidate For Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"dummyCandidateId\", jsonData.data.id);",
+									"    pm.test(\"Dummy candidate created successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Delete Me Candidate\",\n    \"email\": \"deleteme@example.com\",\n    \"appliedPosition\": \"Intern\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/candidates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates"
+							]
+						},
+						"description": "Creates a temporary candidate profile to safely test archive/delete."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Candidate Profile",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/candidates/{{dummyCandidateId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"candidates",
+								"{{dummyCandidateId}}"
+							]
+						},
+						"description": "Hard-deletes / archives a candidate profile (Recruiter, Admin)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04. Interview Sessions",
+			"item": [
+				{
+					"name": "Schedule Interview Session",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var now = new Date();",
+									"var start = new Date(now.getTime() + 2 * 60 * 60 * 1000);",
+									"var end = new Date(now.getTime() + 3 * 60 * 60 * 1000);",
+									"pm.collectionVariables.set(\"sessionStart\", start.toISOString());",
+									"pm.collectionVariables.set(\"sessionEnd\", end.toISOString());"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"sessionId\", jsonData.data.id);",
+									"    pm.test(\"Interview scheduled successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"candidateId\": \"{{candidateId}}\",\n    \"interviewerId\": \"{{interviewerId}}\",\n    \"type\": \"Technical Assessment\",\n    \"scheduledStart\": \"{{sessionStart}}\",\n    \"scheduledEnd\": \"{{sessionEnd}}\",\n    \"meetingLink\": \"https://meet.google.com/abc-defg-hij\",\n    \"location\": \"Remote\",\n    \"internalNotes\": \"Evaluate candidate's problem-solving and coding quality skills.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions"
+							]
+						},
+						"description": "Schedule a new interview session and assign an interviewer (Recruiter only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Sessions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions?status=SCHEDULED&page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "SCHEDULED"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all scheduled interview sessions (Admin, Recruiter)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{interviewerAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions",
+								"{{sessionId}}"
+							]
+						},
+						"description": "Retrieve session details (Accessible to Admin, Recruiter, and the Assigned Interviewer)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Session Details",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": \"Microsoft Teams\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions",
+								"{{sessionId}}"
+							]
+						},
+						"description": "Update details of a scheduled session (Recruiter only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Interview Session",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"COMPLETED\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions/{{sessionId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions",
+								"{{sessionId}}",
+								"status"
+							]
+						},
+						"description": "Mark the session status as COMPLETED to allow evaluations (Recruiter only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Dummy Session For Delete",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var now = new Date();",
+									"var start = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);",
+									"var end = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000);",
+									"pm.collectionVariables.set(\"dummySessionStart\", start.toISOString());",
+									"pm.collectionVariables.set(\"dummySessionEnd\", end.toISOString());"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"dummySessionId\", jsonData.data.id);",
+									"    pm.test(\"Dummy session created successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"candidateId\": \"{{candidateId}}\",\n    \"interviewerId\": \"{{interviewerId}}\",\n    \"type\": \"Screening Call\",\n    \"scheduledStart\": \"{{dummySessionStart}}\",\n    \"scheduledEnd\": \"{{dummySessionEnd}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions"
+							]
+						},
+						"description": "Creates a temporary interview session to safely test deletion."
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel / Delete Session",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/interview-sessions/{{dummySessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"interview-sessions",
+								"{{dummySessionId}}"
+							]
+						},
+						"description": "Cancel and delete a scheduled interview session (Recruiter only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05. Rubric Criteria",
+			"item": [
+				{
+					"name": "Get All Rubric Criteria",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set(\"criterionId\", jsonData.data[0].id);",
+									"    pm.test(\"Rubric criterion captured for evaluation test\", function () {",
+									"        pm.expect(jsonData.data[0].id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{interviewerAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/rubric-criteria",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rubric-criteria"
+							]
+						},
+						"description": "Fetch all configured rubric criteria (Any authenticated user)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "06. Evaluations",
+			"item": [
+				{
+					"name": "Submit Evaluation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"evaluationId\", jsonData.data.id);",
+									"    pm.test(\"Evaluation submitted and locked successfully\", function () {",
+									"        pm.expect(jsonData.data.id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{interviewerAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"sessionId\": \"{{sessionId}}\",\n    \"candidateId\": \"{{candidateId}}\",\n    \"recommendation\": \"YES\",\n    \"overallFeedback\": \"The candidate is a strong fit. Demonstrates excellent communication skills and deep understanding of backend engineering fundamentals.\",\n    \"scores\": [\n        {\n            \"criterionId\": \"{{criterionId}}\",\n            \"score\": 4,\n            \"criterionNote\": \"Demonstrated clear understanding of system scalability constraints.\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/evaluations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"evaluations"
+							]
+						},
+						"description": "Submit a structured rubric evaluation for a completed session (Assigned Interviewer only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Evaluations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/evaluations?recommendation=YES&page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"evaluations"
+							],
+							"query": [
+								{
+									"key": "recommendation",
+									"value": "YES"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Fetch all submitted evaluations (Admin, Recruiter)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Evaluation by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{interviewerAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/evaluations/{{evaluationId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"evaluations",
+								"{{evaluationId}}"
+							]
+						},
+						"description": "Fetch evaluation details (Accessible to Admin, Recruiter, and the Author Interviewer)."
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock Evaluation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"unlockReason\": \"Assigned interviewer needs to correct communication score.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/evaluations/{{evaluationId}}/unlock",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"evaluations",
+								"{{evaluationId}}",
+								"unlock"
+							]
+						},
+						"description": "Unlock a submitted evaluation to allow modifications (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Relock Evaluation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/evaluations/{{evaluationId}}/relock",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"evaluations",
+								"{{evaluationId}}",
+								"relock"
+							]
+						},
+						"description": "Lock the evaluation back after modifications are completed (Admin only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "07. Dashboards",
+			"item": [
+				{
+					"name": "Get Admin Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"admin"
+							]
+						},
+						"description": "Fetch high-level statistics and activity logs (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recruiter Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/recruiter",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"recruiter"
+							]
+						},
+						"description": "Fetch upcoming schedules, recruitment pipeline summary, and pending evaluations count (Recruiter only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Interviewer Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{interviewerAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/interviewer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"interviewer"
+							]
+						},
+						"description": "Fetch assigned schedules, upcoming lists, and pending feedback counts (Interviewer only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "08. Activity Logs",
+			"item": [
+				{
+					"name": "Get All Activity Logs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set(\"activityLogId\", jsonData.data[0].id);",
+									"    pm.test(\"Activity log captured for retrieval test\", function () {",
+									"        pm.expect(jsonData.data[0].id).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/activity-logs?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"activity-logs"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Fetch system audit trails with pagination and filters (Admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activity Log by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/activity-logs/{{activityLogId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"activity-logs",
+								"{{activityLogId}}"
+							]
+						},
+						"description": "Fetch details of a single activity log (Admin only)."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
@@ -203,12 +1506,87 @@
 			"type": "string"
 		},
 		{
+			"key": "adminAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "recruiterAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "interviewerAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
 			"key": "accessToken",
 			"value": "",
 			"type": "string"
 		},
 		{
 			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "recruiterId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "interviewerId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "candidateId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sessionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "criterionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "evaluationId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sessionStart",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sessionEnd",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dummyUserId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dummyCandidateId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dummySessionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "activityLogId",
 			"value": "",
 			"type": "string"
 		}
