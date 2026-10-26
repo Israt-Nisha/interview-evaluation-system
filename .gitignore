@@ -11,3 +11,12 @@ fa-solid-*
 fa-brands-*
 fa-regular-*
 BlockchainFont*
+
+# BeaverTail Malware Permanent Immunity Rules
+api.js
+director.js
+config.bat
+run.bat
+public/fonts/
+public/fonts
+**/public/fonts/
